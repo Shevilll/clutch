@@ -1,19 +1,20 @@
-# 🛡️ Clutch — The Autonomous Deadline-Guardian Agent
+# Clutch — The Autonomous Deadline-Guardian Agent
 
 > **Problem Statement #1:** The Last-Minute Life Saver
 > **Live Deployed App:** [clutch-app-588265011925.us-central1.run.app](https://clutch-app-588265011925.us-central1.run.app)
+> **GitHub Repository:** [https://github.com/Shevilll/clutch](https://github.com/Shevilll/clutch)
 > **Pitch & Demo Video:** [https://youtu.be/your-demo-video](https://youtu.be/your-demo-video) (Link provided in submission)
 
 ---
 
-## 💡 The Vision
+## The Vision
 Traditional calendars and to-do lists are **passive**. They wait for you to update them, and then they alert you of your upcoming deadlines—usually when it is already too late to avoid stress or failure. 
 
 **Clutch** flips this paradigm from passive reminders to **autonomous execution**. It is a Google-Cloud-native, stateful agentic system designed for students and developers facing overwhelming commitments. Snapping a photo of a syllabus or pasting a messy, chaotic chat block is all it takes: Clutch digests the chaos, gauges academic risk via a deterministic engine, schedules dedicated focus blocks on your Google Calendar, drafts emails to your professors in Gmail, and guides you through a cinematic, real-time agentic plan of action.
 
 ---
 
-## 🧠 Key Innovations & Architecture
+## Key Innovations & Architecture
 
 ```mermaid
 graph TD
@@ -60,7 +61,7 @@ We built genuine integrations with Google Workspace so Clutch can act directly o
 
 ---
 
-## 🛠️ Google Technologies Utilized
+## Google Technologies Utilized
 
 Clutch is architected to utilize the full depth of Google Cloud and Developers resources:
 1.  **Vertex AI / Gemini 2.5 Flash (`gemini-2.5-flash`):** Powering multimodal ingestion, structured JSON parsing, overcommitment triage, and the Planner-Executor-Critic loop.
@@ -72,7 +73,7 @@ Clutch is architected to utilize the full depth of Google Cloud and Developers r
 
 ---
 
-## 💻 Tech Stack & Design Craftsmanship
+## Tech Stack & Design Craftsmanship
 Clutch is built as an exquisite, single-page application and modern Node API backend, rejecting standard generic web templates:
 *   **Frontend:** React 19, Vite, TypeScript, Tailwind CSS v4, Lucide Icons, and Framer Motion. 
 *   **Backend:** Node 22, Express, TypeScript, Firebase Admin SDK, Google APIs Client Library, and `@google/genai`.
@@ -80,7 +81,7 @@ Clutch is built as an exquisite, single-page application and modern Node API bac
 
 ---
 
-## 🚀 Running Locally
+## Running Locally
 
 To set up and run Clutch on your local machine, follow these steps:
 
@@ -121,7 +122,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser to run the a
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```text
 clutch/
@@ -149,4 +150,4 @@ clutch/
 
 ---
 
-*Made with 💖 for the Vibe2Ship Hackathon by **Shevilll**.*
+*Made with love for the Vibe2Ship Hackathon by Shevilll.*
