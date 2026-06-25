@@ -7,14 +7,20 @@ import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import path from "path";
 import { fileURLToPath } from "url";
 import { google } from "googleapis";
+import { analyzeOverload } from "./triage.js";
 
 // Load environment variables
 dotenv.config();
 
+const gcloudProject = process.env.GCLOUD_PROJECT || "fourth-waters-500420-b2";
+const vertexLocation = process.env.VERTEX_LOCATION || "us-central1";
+
 // Initialize Firebase Admin using Application Default Credentials (ADC)
 try {
-  admin.initializeApp();
-  console.log("Firebase Admin initialized successfully.");
+  admin.initializeApp({
+    projectId: gcloudProject
+  });
+  console.log(`Firebase Admin initialized successfully for project: ${gcloudProject}`);
 } catch (error) {
   console.error("Error initializing Firebase Admin:", error);
 }
@@ -31,8 +37,6 @@ app.use(cors());
 app.use(express.json({ limit: "50mb" })); // Increase limit for base64 image uploads
 
 // Initialize Google Gen AI with Vertex AI if configured, otherwise use default
-const gcloudProject = process.env.GCLOUD_PROJECT;
-const vertexLocation = process.env.VERTEX_LOCATION || "us-central1";
 
 let ai: GoogleGenAI | null = null;
 
@@ -64,9 +68,20 @@ async function authenticateUser(req: any, res: any, next: any) {
   const idToken = authHeader.split("Bearer ")[1];
 
   // Bypassing for the No-login demo sandbox
-  if (idToken === "demo-token" || idToken === "demo-user") {
-    req.user = { uid: "demo-user", email: "demo@clutch.guardian" };
+  if (idToken === "demo-token" || idToken.startsWith("demo-token:") || idToken === "demo-user" || idToken.startsWith("demo-user:")) {
+    let uid = "demo-user";
+    if (idToken.startsWith("demo-token:")) {
+      uid = idToken.split("demo-token:")[1];
+    } else if (idToken.startsWith("demo-user:")) {
+      uid = idToken.split("demo-user:")[1];
+    }
+    req.user = { uid, email: "demo@clutch.guardian" };
     return next();
+  }
+
+  // Early guard for falsy, "null", "undefined", or malformed non-JWT tokens
+  if (!idToken || idToken === "null" || idToken === "undefined" || idToken.trim() === "" || idToken.split(".").length !== 3) {
+    return res.status(401).json({ error: "Unauthorized: Missing, invalid, or malformed ID token" });
   }
 
   try {
@@ -115,6 +130,19 @@ app.post("/api/ping-llm", async (req, res) => {
       error: "Failed to generate content from Gemini",
       details: error.message || error,
     });
+  }
+});
+
+// Overcommitment Triage API (Task 1)
+app.post("/api/triage", authenticateUser, async (req: any, res: any) => {
+  if (!ai) return res.status(500).json({ error: "AI not initialized" });
+  const { tasks } = req.body;
+  try {
+    const result = await analyzeOverload(ai, tasks);
+    res.json(result);
+  } catch (err: any) {
+    console.error("Error running triage analysis:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -263,11 +291,13 @@ app.post("/api/seed", authenticateUser, async (req: any, res: any) => {
 
     // 1. Clear existing tasks for this user
     const snapshot = await tasksCollection.where("uid", "==", uid).get();
-    const batch = dbAdmin.batch();
-    snapshot.docs.forEach((doc) => {
-      batch.delete(doc.ref);
-    });
-    await batch.commit();
+    if (snapshot.docs.length > 0) {
+      const batch = dbAdmin.batch();
+      snapshot.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+    }
 
     // 2. Define Aarav's dynamic seeded commitments
     const now = new Date();
@@ -331,7 +361,7 @@ app.post("/api/seed", authenticateUser, async (req: any, res: any) => {
         deadline: Timestamp.fromDate(deadlineDBMS),
         estimatedEffortMins: 150,
         description: "Normalize the given database schema and create a completed Entity-Relationship (ER) diagram for the university registration system.",
-        progress: 30,
+        progress: 0.3,
         status: "doing",
         subtasks: [
           { title: "Analyze database anomalies and 3NF", effortMins: 45, done: true },
@@ -392,6 +422,170 @@ app.post("/api/seed", authenticateUser, async (req: any, res: any) => {
   } catch (error: any) {
     console.error("Error seeding demo scenario:", error);
     res.status(500).json({ error: "Failed to seed demo scenario", details: error.message });
+  }
+});
+
+// Google Classroom Assignment Ingestion (T2)
+app.post("/api/classroom/import", authenticateUser, async (req: any, res: any) => {
+  const uid = req.user.uid;
+  const authHeader = req.headers["authorization-google"];
+  let googleToken: string | null = null;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    googleToken = authHeader.split("Bearer ")[1];
+  }
+
+  // Gracefully fallback to seeding mock Classroom coursework in sandbox / demo
+  if (!googleToken || googleToken === "demo-token" || uid === "demo-user" || uid.startsWith("demo-user")) {
+    console.log("[Classroom API] No real token provided or in demo. Seeding mock classroom coursework.");
+    try {
+      const tasksCollection = dbAdmin.collection("tasks");
+      const mockClassroomTasks = [
+        {
+          title: "CS 201: Binary Tree Lab Assignment",
+          type: "assignment",
+          description: "Implement binary search tree deletion and insertion routines with node balancing. Verify performance constraints.",
+          estimatedEffortMins: 120,
+          course: "CS 201: Data Structures"
+        },
+        {
+          title: "MATH 302: Statistics Midterm Prep Quiz",
+          type: "assignment",
+          description: "Solve the pre-exam practice problem set covering z-scores, normal distributions, and Central Limit Theorem.",
+          estimatedEffortMins: 90,
+          course: "MATH 302: Applied Statistics"
+        },
+        {
+          title: "LIT 101: Shakespeare Essay Draft",
+          type: "assignment",
+          description: "Write a 500-word opening argument on agency and fate in Macbeth. Submit draft for peer review.",
+          estimatedEffortMins: 150,
+          course: "LIT 101: Intro to Literature"
+        }
+      ];
+
+      const now = new Date();
+      let importedCount = 0;
+
+      for (const item of mockClassroomTasks) {
+        // Avoid duplicate titles
+        const existingQuery = await tasksCollection
+          .where("uid", "==", uid)
+          .where("title", "==", item.title)
+          .get();
+
+        if (!existingQuery.empty) continue;
+
+        const deadline = new Date(now);
+        if (item.title.includes("Lab")) deadline.setHours(now.getHours() + 18);
+        else if (item.title.includes("Prep")) deadline.setHours(now.getHours() + 42);
+        else deadline.setHours(now.getHours() + 66);
+
+        const newTaskDoc = tasksCollection.doc();
+        const { riskScore, riskBand } = calculateRisk(deadline, item.estimatedEffortMins, 0, item.type);
+
+        await newTaskDoc.set({
+          id: newTaskDoc.id,
+          uid,
+          title: item.title,
+          type: item.type,
+          deadline: Timestamp.fromDate(deadline),
+          description: `${item.description}\n\n[Imported from Google Classroom: ${item.course}]`,
+          progress: 0,
+          status: "todo",
+          subtasks: [],
+          riskScore,
+          riskBand,
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now()
+        });
+
+        importedCount++;
+      }
+
+      return res.json({ 
+        success: true, 
+        importedCount, 
+        message: "Successfully synchronized assignments from your Google Classroom courses (Sandbox Fallback)." 
+      });
+    } catch (err: any) {
+      console.error("Mock classroom import error:", err);
+      return res.status(500).json({ error: "Failed to import coursework", details: err.message });
+    }
+  }
+
+  // Real Google Classroom API path
+  try {
+    const oauth2Client = new google.auth.OAuth2();
+    oauth2Client.setCredentials({ access_token: googleToken });
+    const classroom = google.classroom({ version: "v1", auth: oauth2Client });
+
+    const coursesRes = await classroom.courses.list({ courseStates: ["ACTIVE"] });
+    const courses = coursesRes.data.courses || [];
+    
+    let totalImported = 0;
+    const tasksCollection = dbAdmin.collection("tasks");
+
+    for (const course of courses) {
+      if (!course.id) continue;
+      
+      try {
+        const courseWorkRes = await classroom.courses.courseWork.list({ courseId: course.id });
+        const courseWorkList = courseWorkRes.data.courseWork || [];
+
+        for (const work of courseWorkList) {
+          if (!work.title) continue;
+
+          const existingQuery = await tasksCollection
+            .where("uid", "==", uid)
+            .where("title", "==", work.title)
+            .get();
+
+          if (!existingQuery.empty) continue;
+
+          let deadline = new Date();
+          deadline.setDate(deadline.getDate() + 3); // Default fallback: 3 days
+          
+          if (work.dueDate) {
+            const { year, month, day } = work.dueDate;
+            if (year && month && day) {
+              deadline = new Date(year, month - 1, day, 23, 59, 0);
+            }
+          }
+
+          const newTaskDoc = tasksCollection.doc();
+          const { riskScore, riskBand } = calculateRisk(deadline, 120, 0, "assignment");
+
+          await newTaskDoc.set({
+            id: newTaskDoc.id,
+            uid,
+            title: work.title,
+            type: "assignment",
+            deadline: Timestamp.fromDate(deadline),
+            description: `${work.description || "No description provided."}\n\n[Imported from Google Classroom Course: ${course.name}]`,
+            progress: 0,
+            status: "todo",
+            subtasks: [],
+            riskScore,
+            riskBand,
+            createdAt: Timestamp.now(),
+            updatedAt: Timestamp.now()
+          });
+
+          totalImported++;
+        }
+      } catch (cwErr: any) {
+        console.error(`Failed to fetch coursework for course ${course.name}:`, cwErr.message || cwErr);
+      }
+    }
+
+    res.json({ 
+      success: true, 
+      importedCount: totalImported,
+      message: `Successfully synchronized ${totalImported} assignments from your active Google Classroom courses.`
+    });
+  } catch (error: any) {
+    console.error("Google Classroom real import failure:", error.message || error);
+    res.status(500).json({ error: "Failed to connect to Google Classroom API", details: error.message });
   }
 });
 
@@ -662,6 +856,70 @@ async function createRealGmailDraft(accessToken: string, subject: string, body: 
 }
 
 // Tool 2: draft_artifact
+// Create Google Doc using User OAuth Token (T2)
+async function createRealGoogleDoc(accessToken: string, title: string, markdownContent: string) {
+  try {
+    const oauth2Client = new google.auth.OAuth2();
+    oauth2Client.setCredentials({ access_token: accessToken });
+    const docs = google.docs({ version: "v1", auth: oauth2Client });
+    const drive = google.drive({ version: "v3", auth: oauth2Client });
+
+    // Step 1: Create an empty document on Google Docs
+    const docResponse = await docs.documents.create({
+      requestBody: {
+        title: title
+      }
+    });
+
+    const documentId = docResponse.data.documentId;
+    if (!documentId) {
+      throw new Error("Failed to retrieve document ID after creation.");
+    }
+
+    // Convert markdown headings/styling to plain text for basic insertion
+    const cleanText = markdownContent
+      .replace(/[#*`]/g, "") // strip markdown characters for standard doc read
+      .trim();
+
+    // Step 2: Populate document with the drafted content
+    await docs.documents.batchUpdate({
+      documentId: documentId,
+      requestBody: {
+        requests: [
+          {
+            insertText: {
+              location: {
+                index: 1
+              },
+              text: cleanText
+            }
+          }
+        ]
+      }
+    });
+
+    // Step 3: Get document details (like webViewLink) using the Drive API
+    const driveResponse = await drive.files.get({
+      fileId: documentId,
+      fields: "webViewLink"
+    });
+
+    console.log("Google Doc created with ID:", documentId);
+    return {
+      success: true,
+      documentId: documentId,
+      webViewLink: driveResponse.data.webViewLink
+    };
+  } catch (error: any) {
+    console.error("Failed to create Google Doc:", error.message || error);
+    return {
+      success: false,
+      error: error.message || String(error)
+    };
+  }
+}
+
+// Tool 2: draft_artifact
 async function runDraftArtifact(taskId: string, title: string, description: string, kind: string, uid: string, googleToken?: string | null) {
   if (!ai) return null;
   
@@ -672,6 +930,16 @@ async function runDraftArtifact(taskId: string, title: string, description: stri
     instructions = "Draft a ready-to-send email with a Subject and Body. Adopt a professional, direct, but polite tone.";
   } else if (kind === "study_sheet" || kind === "prep_sheet") {
     instructions = "Draft a comprehensive study sheet/prep guide summarizing key formulas, hypotheses, or key concepts.";
+  } else if (kind === "extension_request") {
+    instructions = "Draft a professional, honest, and highly respectful email to a professor/manager requesting a deadline extension because you are overcommitted. Propose a specific alternative realistic submission date.";
+  } else if (kind === "interview") {
+    instructions = "Generate a custom STAR-format interview preparation guide, complete with tailored mock interview questions specific to this role/task, and recommended behavioral response frameworks.";
+  } else if (kind === "meeting") {
+    instructions = "Draft a professional meeting preparation brief, including background context research outlines, key items to cover, and actionable pre-meeting strategic notes.";
+  } else if (kind === "bill") {
+    instructions = "Draft an invoice/bill audit checklist, along with a professional draft query email for billing adjustments, and scheduling calendar reminders.";
+  } else if (kind === "habit") {
+    instructions = "Propose a structured daily 15-minute focus chunk scheduling slot for building this habit, alongside a 30-day incremental tracking rubric and progress guidelines.";
   } else {
     instructions = "Draft a structured outline of the work to be done.";
   }
@@ -709,9 +977,15 @@ Respond in Markdown. Be extremely thorough and make it feel professional, premiu
   
   let gmailDraftId = null;
   let gmailStatus = "mock";
+  let googleDocId = null;
+  let googleDocLink = null;
+  let googleDocStatus = "mock";
 
-  if (kind === "email_draft" && googleToken) {
-    let subject = `Follow-up regarding: ${title}`;
+  const isRealGoogleToken = googleToken && googleToken !== "demo-token" && uid !== "demo-user" && !uid.startsWith("demo-user");
+
+  // Gmail sync for emails & extension requests
+  if ((kind === "email_draft" || kind === "extension_request") && isRealGoogleToken) {
+    let subject = kind === "extension_request" ? `Extension Request: ${title}` : `Follow-up regarding: ${title}`;
     let body = markdownContent;
     
     // Attempt to extract subject/body from generated markdown
@@ -730,16 +1004,32 @@ Respond in Markdown. Be extremely thorough and make it feel professional, premiu
     }
   }
 
+  // Google Doc sync for essays, outlines, or sheets
+  if ((kind === "first_draft" || kind === "outline" || kind === "study_sheet" || kind === "prep_sheet") && isRealGoogleToken) {
+    const docTitle = `Clutch Draft: ${title} (${kind})`;
+    const docResult = await createRealGoogleDoc(googleToken, docTitle, markdownContent);
+    if (docResult.success) {
+      googleDocId = docResult.documentId;
+      googleDocLink = docResult.webViewLink;
+      googleDocStatus = "synced";
+    } else {
+      googleDocStatus = `failed: ${docResult.error}`;
+    }
+  }
+
   await taskRef.update({
     draftArtifactId: artifactRef.id,
     draftArtifactKind: kind,
     draftPreview: markdownContent.slice(0, 1000), // preview snippet
     gmailDraftId,
     gmailStatus,
+    googleDocId,
+    googleDocLink,
+    googleDocStatus,
     updatedAt: Timestamp.now()
   });
 
-  return { ...artifactData, gmailDraftId, gmailStatus };
+  return { ...artifactData, gmailDraftId, gmailStatus, googleDocId, googleDocLink, googleDocStatus };
 }
 
 // Tool 3: propose_schedule
@@ -759,7 +1049,9 @@ async function runProposeSchedule(taskId: string, title: string, uid: string, go
   let googleEventLink = null;
   let googleCalendarStatus = "mock";
 
-  if (googleToken) {
+  const isRealGoogleToken = googleToken && googleToken !== "demo-token" && uid !== "demo-user" && !uid.startsWith("demo-user");
+
+  if (isRealGoogleToken) {
     const calendarResult = await createRealGoogleCalendarEvent(
       googleToken,
       title,
@@ -905,7 +1197,7 @@ Determine:
 2. What actions should be taken?
 You have the following tools available:
 - "decompose_task" (taskId: string): Best for complex tasks with 0% progress.
-- "draft_artifact" (taskId: string, kind: "email_draft" | "outline" | "first_draft" | "study_sheet" | "prep_sheet"): Best for drafting essays, email follow-ups, or exam study prep sheets.
+- "draft_artifact" (taskId: string, kind: "email_draft" | "outline" | "first_draft" | "study_sheet" | "prep_sheet" | "extension_request"): Best for drafting essays, email follow-ups, exam study prep sheets, or requesting deadline extensions (Honest Triage).
 - "propose_schedule" (taskId: string): Propose a focus block to execute the work.
 - "escalate" (taskId: string, level: "track" | "suggest" | "assist" | "rescue", userMessage: string): Set intervention level and write an action-first status update message.
 
@@ -921,7 +1213,7 @@ Respond with JSON strictly conforming to this schema:
       "tool": "decompose_task" | "draft_artifact" | "propose_schedule" | "escalate",
       "taskId": "the task ID",
       "toolParams": {
-        "kind": "email_draft" | "outline" | "first_draft" | "study_sheet" | "prep_sheet",
+        "kind": "email_draft" | "outline" | "first_draft" | "study_sheet" | "prep_sheet" | "extension_request",
         "level": "track" | "suggest" | "assist" | "rescue",
         "userMessage": "A short status update message telling what the agent is doing"
       },
@@ -949,7 +1241,7 @@ Respond with JSON strictly conforming to this schema:
                   toolParams: {
                     type: "OBJECT",
                     properties: {
-                      kind: { type: "STRING", enum: ["email_draft", "outline", "first_draft", "study_sheet", "prep_sheet"] },
+                      kind: { type: "STRING", enum: ["email_draft", "outline", "first_draft", "study_sheet", "prep_sheet", "extension_request"] },
                       level: { type: "STRING", enum: ["track", "suggest", "assist", "rescue"] },
                       userMessage: { type: "STRING" }
                     }

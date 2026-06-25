@@ -1,1 +1,307 @@
-/* Cleared default styles */
+/* -------------------------------------------------------------------------- */
+/* Clutch Application Custom Styles & Micro-interactions                    */
+/* -------------------------------------------------------------------------- */
+
+/* Premium Scroll Container Utilities with Momentum */
+.scroll-momentum {
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+/* iOS-Style High-End Interactive Toggle Switches */
+.toggle-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  background-color: var(--color-border-primary);
+  transition: background-color 200ms var(--ease-out), box-shadow 150ms var(--ease-out);
+  cursor: pointer;
+  will-change: background-color, box-shadow;
+}
+
+.toggle-switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  background-color: var(--color-bg-panel);
+  box-shadow: 0 1px 3px oklch(0.16 0.01 240 / 0.1), 0 1px 2px oklch(0.16 0.01 240 / 0.06);
+  transition: transform 200ms var(--ease-spring-smooth);
+  will-change: transform;
+}
+
+.toggle-switch-checked {
+  background-color: var(--color-accent) !important;
+}
+
+.toggle-switch-checked::after {
+  transform: translateX(20px);
+}
+
+.toggle-switch:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-bg-panel), 0 0 0 4px var(--color-accent);
+}
+
+/* Premium Bespoke Checkboxes */
+.custom-checkbox {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--color-border-primary);
+  border-radius: 5px;
+  background-color: var(--color-bg-panel);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 150ms var(--ease-out), border-color 150ms var(--ease-out), box-shadow 150ms var(--ease-out);
+  will-change: background-color, border-color, box-shadow;
+}
+
+.custom-checkbox:checked {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.custom-checkbox:checked::after {
+  content: "";
+  display: block;
+  width: 5px;
+  height: 9px;
+  border: solid var(--color-bg-panel);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg) translate(-0.5px, -1px);
+}
+
+.custom-checkbox:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-bg-panel), 0 0 0 4px var(--color-accent);
+}
+
+.custom-checkbox:hover {
+  border-color: var(--color-accent);
+}
+
+/* Fine-tuned Grid Stagger Delays for Entrance Reveals */
+.stagger-1 { animation-delay: 40ms; }
+.stagger-2 { animation-delay: 80ms; }
+.stagger-3 { animation-delay: 120ms; }
+.stagger-4 { animation-delay: 160ms; }
+.stagger-5 { animation-delay: 200ms; }
+.stagger-6 { animation-delay: 240ms; }
+
+/* Custom Range Slider Styling */
+.custom-slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--color-border-primary);
+  outline: none;
+  transition: background 150ms var(--ease-out);
+}
+
+.custom-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  cursor: pointer;
+  box-shadow: 0 2px 4px oklch(0.16 0.01 240 / 0.1);
+  transition: transform 100ms var(--ease-out), background-color 150ms var(--ease-out);
+  will-change: transform;
+}
+
+.custom-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  background: var(--color-accent-hover);
+}
+
+.custom-slider::-webkit-slider-thumb:active {
+  transform: scale(0.95);
+}
+
+/* Glassy Border Separators & Backdrops */
+.glass-divider {
+  position: relative;
+}
+
+.glass-divider::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-border-primary) 15%, var(--color-border-primary) 85%, transparent);
+}
+
+/* Elegant Premium Tooltips */
+.premium-tooltip {
+  background-color: var(--color-text-primary);
+  color: var(--color-bg-panel);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 6px 10px;
+  transform-origin: bottom center;
+  animation: scale-up 180ms var(--ease-spring-smooth) forwards;
+}
+
+/* Subtle physical floating effect for micro-status indicators */
+@keyframes micro-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.micro-float {
+  animation: micro-float 3s ease-in-out infinite;
+}
+
+/* High Contrast Input Placeholders */
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-text-muted);
+  opacity: 0.8;
+}
+
+/* Drag and Drop Active Target State Glows */
+.drag-target-active {
+  border-color: var(--color-accent) !important;
+  background-color: oklch(0.55 0.22 272 / 0.02) !important;
+  box-shadow: 0 0 0 4px oklch(0.55 0.22 272 / 0.08) !important;
+}
+
+/* ========================================================================== */
+/* Premium Custom Scrollbars, Glassmorphism, Grids & Borders Utilities        */
+/* ========================================================================== */
+
+/* Hair-thin vertical/horizontal scrollbar container utility */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+@supports not (scrollbar-color: auto) {
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 9999px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+  }
+}
+
+/* Hide scrollbar completely while maintaining scrollability */
+.scrollbar-hide {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* IE and Edge */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Hide horizontal scrollbar specifically */
+.scrollbar-hide-x {
+  scrollbar-width: auto;
+}
+.scrollbar-hide-x::-webkit-scrollbar:horizontal {
+  display: none;
+}
+
+/* Premium Glassmorphism Utilities */
+.glass-panel {
+  background-color: oklch(1 0 0 / 0.72);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid oklch(0.16 0.01 240 / 0.06);
+}
+
+.glass-card {
+  background: linear-gradient(135deg, oklch(1 0 0 / 0.8), oklch(1 0 0 / 0.45));
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid oklch(1 0 0 / 0.6);
+  box-shadow: 
+    0 8px 32px 0 oklch(0.16 0.01 240 / 0.03),
+    inset 0 1px 1px 0 oklch(1 0 0 / 0.8);
+}
+
+.glass-card-hover {
+  transition: transform 220ms var(--ease-out), box-shadow 220ms var(--ease-out), border-color 220ms var(--ease-out);
+  will-change: transform, box-shadow, border-color;
+  transform: translate3d(0, 0, 0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.glass-card-hover:hover {
+  transform: translateY(-2px) translate3d(0, 0, 0);
+  box-shadow: 
+    0 12px 40px 0 oklch(0.16 0.01 240 / 0.06),
+    0 0 0 1px oklch(0.55 0.22 272 / 0.1);
+  border-color: oklch(0.55 0.22 272 / 0.2);
+}
+
+/* Technical Blueprint Grid Background Utility */
+.blueprint-grid {
+  background-size: 24px 24px;
+  background-image: 
+    linear-gradient(to right, oklch(0.16 0.01 240 / 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, oklch(0.16 0.01 240 / 0.03) 1px, transparent 1px);
+}
+
+.blueprint-grid-fine {
+  background-size: 8px 8px;
+  background-image: 
+    linear-gradient(to right, oklch(0.16 0.01 240 / 0.015) 1px, transparent 1px),
+    linear-gradient(to bottom, oklch(0.16 0.01 240 / 0.015) 1px, transparent 1px);
+}
+
+.blueprint-grid-accent {
+  background-size: 20px 20px;
+  background-image: 
+    linear-gradient(to right, oklch(0.55 0.22 272 / 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, oklch(0.55 0.22 272 / 0.02) 1px, transparent 1px);
+}
+
+/* Glowing Technical Borders */
+.border-glow {
+  border: 1px solid oklch(0.55 0.22 272 / 0.15) !important;
+  box-shadow: 
+    0 0 12px oklch(0.55 0.22 272 / 0.04),
+    inset 0 0 8px oklch(0.55 0.22 272 / 0.02);
+}
+
+.border-glow-accent {
+  border: 1px solid oklch(0.55 0.22 272 / 0.25) !important;
+  box-shadow: 
+    0 0 16px oklch(0.55 0.22 272 / 0.08),
+    inset 0 0 12px oklch(0.55 0.22 272 / 0.04);
+}
+
+.border-glow-pulse {
+  border: 1px solid oklch(0.55 0.22 272 / 0.2) !important;
+  box-shadow: 
+    0 0 12px oklch(0.55 0.22 272 / 0.05),
+    inset 0 0 8px oklch(0.55 0.22 272 / 0.02);
+  animation: border-pulse-glow 3s ease-in-out infinite;
+}

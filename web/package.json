@@ -1,5 +1,5 @@
 {
-  "name": "web",
+  "name": "clutch-web",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -28,6 +28,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
     "oxlint": "^1.69.0",
+    "playwright": "^1.61.1",
     "typescript": "~6.0.2",
     "vite": "^8.1.0"
   }

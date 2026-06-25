@@ -3,7 +3,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Helper to check if user matches the owner, or if it is the sandbox demo user
     function isOwnerOrDemo(uid) {
-      return uid == "demo-user" || (request.auth != null && request.auth.uid == uid);
+      return uid == "demo-user" || uid.matches('^demo-user.*') || (request.auth != null && request.auth.uid == uid);
     }
 
     match /users/{uid} {

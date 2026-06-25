@@ -32,3 +32,12 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+# Internal docs, screen caps, and scratchpads
+DEMO-SCRIPT.md
+PROGRESS.md
+SUBMISSION-DOC.md
+screenshot.jpg
+web/scratch/
+docs/
+
