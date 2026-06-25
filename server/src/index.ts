@@ -211,25 +211,21 @@ ${text || "Extract tasks from the uploaded image."}`;
 
     for (const task of extractedTasks) {
       const newTaskDoc = tasksCollection.doc();
-      const deadlineDate = new Date(task.deadline);
+      let deadlineDate = new Date(task.deadline);
       
-      // Calculate a baseline risk score & band (Stage 2 will refine this, but we want something working for Stage 1)
-      const msRemaining = deadlineDate.getTime() - now.getTime();
-      const hoursRemaining = msRemaining / (1000 * 60 * 60);
-      
-      let riskScore = 10;
-      if (hoursRemaining > 0) {
-        const effortHours = task.estimatedEffortMins / 60;
-        const ratio = effortHours / hoursRemaining;
-        riskScore = Math.min(100, Math.round(ratio * 100));
-      } else {
-        riskScore = 100; // deadline passed
+      // Safety guard against invalid date formatting
+      if (isNaN(deadlineDate.getTime())) {
+        deadlineDate = new Date();
+        deadlineDate.setHours(deadlineDate.getHours() + 24); // Fallback: 24 hours from now
       }
-      
-      let riskBand: "low" | "medium" | "high" | "critical" = "low";
-      if (riskScore > 75) riskBand = "critical";
-      else if (riskScore > 50) riskBand = "high";
-      else if (riskScore > 25) riskBand = "medium";
+
+      // Run consistent, refined Risk Engine calculations (aligns capture with standard risk ratings)
+      const { riskScore, riskBand } = calculateRisk(
+        deadlineDate,
+        task.estimatedEffortMins,
+        0, // Ingested tasks have 0 progress
+        task.type
+      );
 
       const taskData = {
         id: newTaskDoc.id,
@@ -241,7 +237,7 @@ ${text || "Extract tasks from the uploaded image."}`;
         description: task.description,
         progress: 0,
         status: "todo",
-        subtasks: task.subtasks.map((st: any) => ({ ...st, done: false })),
+        subtasks: (task.subtasks || []).map((st: any) => ({ ...st, done: false })),
         riskScore,
         riskBand,
         createdAt: Timestamp.now(),
