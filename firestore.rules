@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper to check if user matches the owner, or if it is the sandbox demo user
+    function isOwnerOrDemo(uid) {
+      return uid == "demo-user" || (request.auth != null && request.auth.uid == uid);
+    }
+
+    match /users/{uid} {
+      allow read, write: if isOwnerOrDemo(uid);
+    }
+
+    match /tasks/{taskId} {
+      allow read, write: if isOwnerOrDemo(resource.data.uid) || (request.resource != null && isOwnerOrDemo(request.resource.data.uid));
+    }
+
+    match /plans/{planId} {
+      allow read, write: if isOwnerOrDemo(resource.data.uid) || (request.resource != null && isOwnerOrDemo(request.resource.data.uid));
+    }
+
+    match /artifacts/{artifactId} {
+      allow read, write: if isOwnerOrDemo(resource.data.uid) || (request.resource != null && isOwnerOrDemo(request.resource.data.uid));
+    }
+
+    match /agentRuns/{runId} {
+      allow read, write: if isOwnerOrDemo(resource.data.uid) || (request.resource != null && isOwnerOrDemo(request.resource.data.uid));
+    }
+  }
+}
