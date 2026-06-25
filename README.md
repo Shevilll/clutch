@@ -3,7 +3,7 @@
 > **Problem Statement #1:** The Last-Minute Life Saver
 > **Live Deployed App:** [clutch.theahmadfaraz.com](https://clutch.theahmadfaraz.com)
 > **GitHub Repository:** [https://github.com/Shevilll/clutch](https://github.com/Shevilll/clutch)
-> **Pitch & Demo Video:** [https://youtu.be/your-demo-video](https://youtu.be/your-demo-video) (Link provided in submission)
+> **Pitch & Demo Video:** [https://clutch.theahmadfaraz.com/presentation](https://clutch.theahmadfaraz.com/presentation)
 
 ---
 
