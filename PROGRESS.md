@@ -7,7 +7,7 @@ Track progress of our vertical-slice build here. Mark items as completed as we p
 - [x] Create/confirm GCP project, link billing (credits)
 - [x] Scaffold monorepo: `/web` (React+Vite+TS+Tailwind v4) and `/server` (Node 22 + TypeScript)
 - [x] Create local Git repo, configure author as `Shevilll`
-- [ ] Implement Express server with `/api/health` and `/api/ping-llm` endpoints using `@google/genai`
+- [x] Implement Express server with `/api/health` and `/api/ping-llm` endpoints using `@google/genai`
 - [ ] Connect Firebase project & Firebase Auth (Google Sign-In) in the SPA
 - [ ] Dockerfile setup for containerized build
 - [ ] Deploy to Cloud Run & confirm public HTTPS URL works
