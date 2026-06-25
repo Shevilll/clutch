@@ -56,6 +56,7 @@ import TaskDrawer from "./components/TaskDrawer";
 import { TriageModal } from "./components/TriageModal";
 import CommandPalette from "./components/CommandPalette";
 import { WorkspaceErrorModal } from "./components/WorkspaceErrorModal";
+import PresentationTab from "./components/PresentationTab";
 
 // Helper to determine the backend API base URL
 const getApiUrl = (path: string) => {
@@ -82,14 +83,20 @@ export default function App() {
   }, []);
 
   // Sync activeTab with URL path
-  const validTabs = ["today", "tasks", "agent", "hood"];
+  const validTabs = ["today", "tasks", "agent", "hood", "presentation"];
   
   // Update state from path on load or back/forward navigation
   useEffect(() => {
     if (authLoading) return;
 
+    const path = location.pathname.substring(1); // Remove leading slash
+
+    if (path === "presentation") {
+      setActiveTab("presentation");
+      return;
+    }
+
     if (user || isDemoMode) {
-      const path = location.pathname.substring(1); // Remove leading slash
       if (validTabs.includes(path)) {
         setActiveTab(path);
       } else if (location.pathname === "/") {
@@ -739,6 +746,13 @@ export default function App() {
 
   // Authentication Wall
   if (!user) {
+    if (activeTab === "presentation") {
+      return (
+        <div className="min-h-screen w-screen bg-bg-base text-text-primary p-6 md:p-10 max-w-6xl mx-auto flex flex-col space-y-8">
+          <PresentationTab isPublic={true} onBackToHome={() => navigate("/")} />
+        </div>
+      );
+    }
     return (
       <div className="relative">
         {toastMessage && (
@@ -897,6 +911,7 @@ export default function App() {
                     { id: "today", label: "Morning Briefing", icon: Activity },
                     { id: "tasks", label: "Tasks Board", icon: ListTodo, badge: tasks.length > 0 ? tasks.length : undefined },
                     { id: "agent", label: "Agent Loop", icon: Terminal, secondaryBadge: "Live" },
+                    { id: "presentation", label: "Presentation Deck", icon: Play, secondaryBadge: "Video", badgeColor: "bg-indigo-100 text-indigo-800 border-indigo-200/40" },
                     { id: "hood", label: "Under The Hood", icon: Sliders, secondaryBadge: "Tech", badgeColor: "bg-emerald-100 text-emerald-800 border-emerald-200/40" }
                   ].map((item) => {
                     const Icon = item.icon;
@@ -1048,6 +1063,7 @@ export default function App() {
               { id: "today", label: "Morning Briefing", icon: Activity },
               { id: "tasks", label: "Tasks Board", icon: ListTodo, badge: tasks.length > 0 ? tasks.length : undefined },
               { id: "agent", label: "Agent Loop", icon: Terminal, secondaryBadge: "Live" },
+              { id: "presentation", label: "Presentation Deck", icon: Play, secondaryBadge: "Video", badgeColor: "bg-indigo-100 text-indigo-800 border-indigo-200/40" },
               { id: "hood", label: "Under The Hood", icon: Sliders, secondaryBadge: "Tech", badgeColor: "bg-emerald-100 text-emerald-800 border-emerald-200/40" }
             ].map((item) => {
               const Icon = item.icon;
@@ -1168,6 +1184,8 @@ export default function App() {
                 ? "Active Commitments" 
                 : activeTab === "hood"
                 ? "Under the Hood"
+                : activeTab === "presentation"
+                ? "Presentation Deck"
                 : "Autonomous Agent Loop"}
             </h2>
             <p className="text-xs text-text-secondary mt-1">
@@ -1177,6 +1195,8 @@ export default function App() {
                 ? "Ingest commits, syllabi, or raw inputs into structured goals."
                 : activeTab === "hood"
                 ? "Deep blueprint analysis of Vertex AI & Cloud Run orchestrations."
+                : activeTab === "presentation"
+                ? "Full project showcase presentation with synchronized audio."
                 : "Live execution trace logs of the Clutch background loop."}
             </p>
           </div>
@@ -1488,6 +1508,9 @@ export default function App() {
               </div>
             </div>
           </div>
+        )}
+        {activeTab === "presentation" && (
+          <PresentationTab />
         )}
       </main>
 
