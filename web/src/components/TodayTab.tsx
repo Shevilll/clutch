@@ -20,8 +20,13 @@ import {
   Brain,
   Target,
   Check,
-  TrendingUp
+  TrendingUp,
+  X,
+  Play,
+  Pause,
+  Sliders
 } from "lucide-react";
+
 
 interface TodayTabProps {
   user: any;
@@ -39,6 +44,8 @@ interface TodayTabProps {
   getTaskIcon: (type: string) => React.ReactNode;
   getRiskStyles: (band: string) => string;
   highRiskTasks: any[];
+  focusMode: boolean;
+  setFocusMode: (mode: boolean) => void;
 }
 
 export default function TodayTab({
@@ -56,10 +63,34 @@ export default function TodayTab({
   getDeadlineCountdown,
   getTaskIcon,
   getRiskStyles,
-  highRiskTasks
+  highRiskTasks,
+  focusMode,
+  setFocusMode
 }: TodayTabProps) {
-  const [focusMode, setFocusMode] = useState<boolean>(false);
   const [pulseBadge, setPulseBadge] = useState<boolean>(false);
+
+  // Streak & Shield details modal state
+  const [isStreakModalOpen, setIsStreakModalOpen] = useState<boolean>(false);
+  const [focusGoal, setFocusGoal] = useState<number>(120); // focus goal in minutes
+  const [timeLeft, setTimeLeft] = useState<number>(300); // 5-minute rescue sprint (300s)
+  const [timerActive, setTimerActive] = useState<boolean>(false);
+
+  // Handle streak rescue pomodoro timer countdown
+  useEffect(() => {
+    let interval: any = null;
+    if (timerActive && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft(prev => prev - 1);
+      }, 1000);
+    } else if (timeLeft === 0 && timerActive) {
+      setTimerActive(false);
+      setStreak(prev => prev + 1);
+      showToast("SUCCESS! Mini focus sprint complete. Streak rescued!");
+      setTimeLeft(300);
+    }
+    return () => clearInterval(interval);
+  }, [timerActive, timeLeft, setStreak, showToast]);
+
 
   // Focus mode task is the single most urgent (sorted first in lists)
   const urgentTask = highRiskTasks.length > 0 ? highRiskTasks[0] : tasks[0];
@@ -104,42 +135,16 @@ export default function TodayTab({
   ];
 
   return (
-    <div className="space-y-10 animate-fade-in bg-slate-50/40 min-h-screen p-6 md:p-10 text-slate-800 rounded-[32px] border border-slate-100/70 shadow-[inset_0_1px_2px_rgba(255,255,255,0.8),_0_1px_3px_rgba(0,0,0,0.02)]">
-      {/* Top Banner with focus toggle and status */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100/80 pb-6">
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 font-mono">DEADLINE GUARDIAN</span>
-          <h2 className="text-2xl font-black text-slate-950 tracking-tight mt-0.5">Today's Focus Control</h2>
-        </div>
-
-        <div className="flex items-center space-x-3 self-start sm:self-auto flex-wrap gap-y-2">
-          {/* Focus Mode Trigger - Tactile & Premium */}
-          <button
-            onClick={() => {
-              setFocusMode(!focusMode);
-              showToast(!focusMode ? "Focus Mode Activated. Simplify and conquer." : "Dashboard restored.");
-            }}
-            className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl text-xs font-semibold shadow-sm border transition-all duration-200 active:scale-[0.97] cursor-pointer ${
-              focusMode 
-                ? "bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-100/30" 
-                : "bg-bg-panel text-slate-700 border-border-primary hover:bg-bg-hover hover:border-border-primary"
-            }`}
-          >
-            {focusMode ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
-            <span>{focusMode ? "Exit Focus Mode" : "Focus Mode"}</span>
-          </button>
-        </div>
-      </div>
-
+    <div className="space-y-8 animate-fade-in text-text-primary">
       {focusMode ? (
         /* FOCUS MODE - Minimalist Single Urgent Task Display */
         <div className="animate-scale-up py-16 flex flex-col items-center justify-center max-w-2xl mx-auto space-y-10">
           <div className="text-center space-y-2">
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-mono font-bold uppercase tracking-wider">
+            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/30 text-[10px] font-mono font-bold uppercase tracking-wider">
               <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />
               <span>SINGLE CRITICAL FOCUS ACTIVE</span>
             </div>
-            <p className="text-sm text-slate-500 mt-2">Zero distractions. Just complete this one commitment.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">Zero distractions. Just complete this one commitment.</p>
           </div>
 
           {urgentTask ? (
@@ -194,7 +199,7 @@ export default function TodayTab({
               <div className="mt-10 pt-8 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <button
                   onClick={() => setSelectedTask(urgentTask)}
-                  className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-semibold shadow-md shadow-slate-950/10 transition-all duration-200 active:scale-[0.97] flex items-center justify-center space-x-2 cursor-pointer"
+                  className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-50 text-xs font-semibold shadow-md shadow-slate-950/10 transition-all duration-200 active:scale-[0.97] flex items-center justify-center space-x-2 cursor-pointer"
                 >
                   <span>Open Deep Work Panel</span>
                   <ChevronRight className="w-4 h-4" />
@@ -266,7 +271,7 @@ export default function TodayTab({
                     showToast("Please seed or capture commitments to inspect.");
                   }
                 }}
-                className="px-6 py-3 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-semibold shadow-sm transition-all duration-200 cursor-pointer active:scale-[0.97]"
+                className="px-6 py-3 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-50 text-xs font-semibold shadow-sm transition-all duration-200 cursor-pointer active:scale-[0.97]"
               >
                 {highRiskTasks.length > 0 ? "Review Critical Task" : "Review All Commitments"}
               </button>
@@ -291,12 +296,11 @@ export default function TodayTab({
               {/* Gamified Streak Counter with animated fire SVG */}
               <div 
                 onClick={() => {
-                  setStreak(prev => prev + 1);
-                  showToast("Streak amplified! Keep the momentum!");
+                  setIsStreakModalOpen(true);
                 }}
                 role="button"
                 tabIndex={0}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { setStreak(prev => prev + 1); } }}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { setIsStreakModalOpen(true); } }}
                 className="group flex items-center justify-between p-4 rounded-2xl bg-amber-50/60 text-orange-800 border border-amber-100/50 font-semibold transition-all duration-200 hover:shadow-sm hover:border-orange-200/50 active:scale-[0.97] cursor-pointer"
               >
                 <div className="flex items-center space-x-3">
@@ -305,7 +309,7 @@ export default function TodayTab({
                     <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping" />
                   </div>
                   <div className="flex flex-col text-left">
-                    <span className="text-[10px] uppercase font-bold text-orange-500 tracking-wider">RESCUE STREAK</span>
+                    <span className="text-[10px] uppercase font-bold text-orange-500 tracking-wider">STREAK SYSTEM</span>
                     <span className="text-sm font-black text-slate-900">{streak} Days Strong</span>
                   </div>
                 </div>
@@ -316,18 +320,15 @@ export default function TodayTab({
               <button
                 id="streak-shield-toggle-button"
                 type="button"
-                aria-pressed={streakShield}
                 onClick={() => {
-                  const newVal = !streakShield;
-                  setStreakShield(newVal);
-                  showToast(newVal ? "Streak Shield Activated!" : "Streak Shield Deactivated");
+                  setIsStreakModalOpen(true);
                 }}
                 className={`group flex items-center justify-between w-full p-4 rounded-2xl border text-left font-semibold transition-all duration-200 active:scale-[0.97] cursor-pointer ${
                   streakShield 
                     ? "bg-blue-50/50 text-blue-800 border-blue-100/60 hover:border-blue-200/80" 
                     : "bg-slate-50/80 text-slate-500 border-slate-100 hover:bg-slate-100/50 hover:border-slate-200"
                 }`}
-                title="Click to toggle streak shield manually"
+                title="Click to manage streak shield"
               >
                 <div className="flex items-center space-x-3">
                   <div className={`flex items-center justify-center w-10 h-10 rounded-xl shrink-0 transition-colors duration-200 ${
@@ -528,7 +529,7 @@ export default function TodayTab({
                   onClick={() => {
                     showToast("No critical risks detected. Guardian shield standing by.");
                   }}
-                  className="w-full py-3 rounded-xl bg-slate-950 hover:bg-slate-850 text-white text-xs font-semibold transition-all duration-200 shrink-0 shadow-sm flex items-center justify-center space-x-2 cursor-pointer active:scale-[0.97]"
+                  className="w-full py-3 rounded-xl bg-slate-950 hover:bg-slate-850 text-slate-50 text-xs font-semibold transition-all duration-200 shrink-0 shadow-sm flex items-center justify-center space-x-2 cursor-pointer active:scale-[0.97]"
                 >
                   <RotateCw className="w-3.5 h-3.5" />
                   <span>Refresh Guardian Scan</span>
@@ -628,6 +629,212 @@ export default function TodayTab({
             )}
           </div>
 
+        </div>
+      )}
+
+      {/* STREAK & SHIELD CONTROL CENTER MODAL */}
+      {isStreakModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 md:p-6 animate-fade-in">
+          <div className="bg-white/95 border border-slate-200/80 rounded-[32px] shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 md:p-8 space-y-6 flex flex-col relative animate-scale-up text-slate-800">
+            
+            {/* Close Button */}
+            <button
+              onClick={() => {
+                setIsStreakModalOpen(false);
+                setTimerActive(false); // pause timer on close
+              }}
+              className="absolute top-6 right-6 p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all duration-200 cursor-pointer active:scale-95 border-none bg-transparent"
+              aria-label="Close modal"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Modal Header */}
+            <div>
+              <div className="flex items-center space-x-2 text-[10px] font-bold text-indigo-600 uppercase tracking-widest font-mono mb-2">
+                <Trophy className="w-4 h-4 text-indigo-500" />
+                <span>Streak & Shield Control Center</span>
+              </div>
+              <h3 className="text-xl font-black text-slate-900 leading-tight">Focus Rhythm Guardian</h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Your streak tracks consecutive focus days. The Streak Shield protects your progress if you fail to complete your active commitments inside a scheduled focus block.
+              </p>
+            </div>
+
+            {/* Main Telemetry & Quick Action Cards */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 bg-amber-50/60 border border-amber-100/50 rounded-2xl flex flex-col justify-between h-28 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-12 h-12 rounded-full bg-amber-500/5 opacity-40 blur-lg" />
+                <div className="flex items-center space-x-2 text-orange-800">
+                  <Flame className="w-4 h-4 text-orange-500 animate-bounce" />
+                  <span className="text-[10px] font-extrabold uppercase tracking-wide">Streak</span>
+                </div>
+                <div className="mt-2 text-xl font-black text-slate-900">{streak} Days</div>
+                <span className="text-[9px] font-bold text-orange-500 tracking-wide mt-1 block">RHYTHM SECURED</span>
+              </div>
+
+              <div className={`p-4 rounded-2xl border flex flex-col justify-between h-28 relative overflow-hidden group transition-all duration-200 ${
+                streakShield 
+                  ? "bg-blue-50/50 text-blue-800 border-blue-100/60" 
+                  : "bg-slate-50/80 text-slate-500 border-slate-100"
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Shield className={`w-4 h-4 ${streakShield ? "text-blue-500 animate-pulse" : "text-slate-400"}`} />
+                    <span className="text-[10px] font-extrabold uppercase tracking-wide">Shield</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setStreakShield(!streakShield);
+                      showToast(!streakShield ? "Streak Shield Activated!" : "Streak Shield Deactivated");
+                    }}
+                    className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded cursor-pointer transition-colors duration-150 active:scale-95 ${
+                      streakShield 
+                        ? "bg-blue-100/80 text-blue-700 hover:bg-blue-200/80" 
+                        : "bg-slate-200 text-slate-700 hover:bg-slate-300"
+                    }`}
+                  >
+                    {streakShield ? "Disable" : "Charge"}
+                  </button>
+                </div>
+                <div className="mt-2 text-xl font-black text-slate-900">
+                  {streakShield ? "Active Guard" : "Standby"}
+                </div>
+                <span className="text-[9px] font-semibold text-slate-400 tracking-wide mt-1 block">
+                  {streakShield ? "Protects 1 missed day" : "Uncharged: click to charge"}
+                </span>
+              </div>
+            </div>
+
+            {/* Weekly Calendar Rhythm View */}
+            <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl space-y-3">
+              <span className="text-[10px] font-bold text-slate-400 font-mono uppercase tracking-wider block">Weekly Habit Matrix</span>
+              <div className="grid grid-cols-7 gap-2">
+                {[
+                  { name: "M", completed: true },
+                  { name: "T", completed: true },
+                  { name: "W", completed: true },
+                  { name: "T", completed: true },
+                  { name: "F", completed: false, current: true },
+                  { name: "S", completed: false, shield: true },
+                  { name: "S", completed: false, shield: true },
+                ].map((day, idx) => (
+                  <div key={idx} className="flex flex-col items-center space-y-1.5">
+                    <span className="text-[9px] font-bold text-slate-400 font-mono">{day.name}</span>
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center border text-xs transition-all duration-200 ${
+                      day.completed 
+                        ? "bg-amber-100 text-orange-600 border-amber-200" 
+                        : day.current 
+                          ? "bg-indigo-50 border-indigo-200 text-indigo-600 ring-2 ring-indigo-100/50"
+                          : day.shield
+                            ? "bg-blue-50/50 text-blue-500 border-blue-100/50"
+                            : "bg-slate-100 text-slate-300 border-slate-200/60"
+                    }`}>
+                      {day.completed ? (
+                        <Flame className="w-4 h-4 fill-orange-500/20" />
+                      ) : day.current ? (
+                        <span className="font-mono font-bold animate-pulse">•</span>
+                      ) : day.shield ? (
+                        <Shield className="w-3.5 h-3.5" />
+                      ) : (
+                        <span className="font-mono font-bold">-</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Focus Target Calibration */}
+            <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl space-y-3">
+              <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 font-mono uppercase tracking-wider">
+                <span className="flex items-center space-x-1.5">
+                  <Sliders className="w-3.5 h-3.5" />
+                  <span>Configure Study Goal</span>
+                </span>
+                <span className="text-indigo-600">{focusGoal}m Daily</span>
+              </div>
+              <div className="flex space-x-2">
+                {[60, 90, 120, 180, 240].map((mins) => (
+                  <button
+                    key={mins}
+                    onClick={() => {
+                      setFocusGoal(mins);
+                      showToast(`Daily study target set to ${mins} minutes.`);
+                    }}
+                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-mono font-bold transition-all duration-150 cursor-pointer active:scale-95 ${
+                      focusGoal === mins 
+                        ? "bg-slate-900 text-white" 
+                        : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                    }`}
+                  >
+                    {mins}m
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Active Streak Rescue Timer */}
+            <div className="p-5 bg-indigo-50/50 border border-indigo-100/50 rounded-2xl space-y-4">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-indigo-700 uppercase tracking-wider font-mono">
+                    Tactile Rescue Sprint
+                  </span>
+                  <span className="text-[9px] font-mono font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded uppercase">
+                    ACTIVE SPRINT
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                  Missed your study block? Don't break the streak! Run a <strong>5-minute micro focus sprint</strong> now to rescue it immediately.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between bg-white border border-indigo-100/60 rounded-xl px-4 py-3 shadow-inner">
+                {/* Timer Display */}
+                <div className="text-2xl font-black font-mono text-slate-900 tracking-tight">
+                  {Math.floor(timeLeft / 60).toString().padStart(2, '0')}:{(timeLeft % 60).toString().padStart(2, '0')}
+                </div>
+
+                {/* Control Buttons */}
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => {
+                      setTimerActive(!timerActive);
+                    }}
+                    className={`p-2 rounded-lg cursor-pointer transition-all duration-150 active:scale-95 border-none ${
+                      timerActive 
+                        ? "bg-amber-100 text-amber-700 hover:bg-amber-200" 
+                        : "bg-indigo-600 text-white hover:bg-indigo-700"
+                    }`}
+                    title={timerActive ? "Pause Timer" : "Start Timer"}
+                  >
+                    {timerActive ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current" />}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setTimerActive(false);
+                      setTimeLeft(300);
+                    }}
+                    className="p-2 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700 cursor-pointer transition-all duration-150 active:scale-95 border-none"
+                    title="Reset Timer"
+                  >
+                    <RotateCw className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                setIsStreakModalOpen(false);
+                setTimerActive(false);
+              }}
+              className="w-full py-3.5 rounded-xl bg-slate-950 hover:bg-slate-850 text-slate-50 text-xs font-bold transition-all duration-200 cursor-pointer active:scale-97 border-none"
+            >
+              Secure & Exit Settings
+            </button>
+          </div>
         </div>
       )}
     </div>

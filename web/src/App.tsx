@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   signInWithPopup, 
@@ -37,7 +38,11 @@ import {
   CheckCircle2,
   TrendingUp,
   Menu,
-  X
+  X,
+  Minimize2,
+  Maximize2,
+  Sun,
+  Moon
 } from "lucide-react";
 import { auth, googleProvider, db } from "./firebase";
 
@@ -59,18 +64,48 @@ const getApiUrl = (path: string) => {
 };
 
 export default function App() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [user, setUser] = useState<User | any>(null);
   const [tasks, setTasks] = useState<any[]>([]);
   const [loadingTasks, setLoadingTasks] = useState<boolean>(false);
   const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
   const [googleToken, setGoogleToken] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState<boolean>(true);
 
-  // Lock application permanently in Light Mode (clean editorial aesthetic)
+  // Theme Management System: Locked permanently to Light Mode
   useEffect(() => {
     const root = window.document.documentElement;
     root.classList.remove("dark");
     localStorage.removeItem("clutch-theme");
   }, []);
+
+  // Sync activeTab with URL path
+  const validTabs = ["today", "tasks", "agent", "hood"];
+  
+  // Update state from path on load or back/forward navigation
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (user || isDemoMode) {
+      const path = location.pathname.substring(1); // Remove leading slash
+      if (validTabs.includes(path)) {
+        setActiveTab(path);
+      } else if (location.pathname === "/") {
+        // If logged in and on landing page, redirect to today
+        navigate("/today", { replace: true });
+      } else {
+        // Redirect any other path to today
+        navigate("/today", { replace: true });
+      }
+    } else {
+      // If not logged in and not in demo mode, must go to landing page
+      if (location.pathname !== "/") {
+        navigate("/", { replace: true });
+      }
+    }
+  }, [location.pathname, user, isDemoMode, authLoading, navigate]);
 
   // Gamified States (Stage 2 & Today Tab integration)
   const [streak, setStreak] = useState<number>(5);
@@ -117,6 +152,7 @@ export default function App() {
   
   // Navigation & Tabs
   const [activeTab, setActiveTab] = useState<string>("today");
+  const [focusMode, setFocusMode] = useState<boolean>(false);
 
   // Capture Form States
   const [inputText, setInputText] = useState<string>("");
@@ -148,9 +184,16 @@ export default function App() {
   // Track Firebase Auth state
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser && !isDemoMode) {
-        setUser(currentUser);
+      if (currentUser) {
+        if (!isDemoMode) {
+          setUser(currentUser);
+        }
+      } else {
+        if (!isDemoMode) {
+          setUser(null);
+        }
       }
+      setAuthLoading(false);
     });
     return () => unsubscribe();
   }, [isDemoMode]);
@@ -451,7 +494,7 @@ export default function App() {
   const triggerAgentLoop = async () => {
     if (runningAgent) return;
     setRunningAgent(true);
-    setActiveTab("agent");
+    navigate("/agent");
     showToast("Launching Clutch Agent! Observe its reasoning pipeline live.");
 
     try {
@@ -648,6 +691,52 @@ export default function App() {
   // Filter high risk tasks
   const highRiskTasks = tasks.filter((t: any) => t.riskBand === "critical" || t.riskBand === "high");
 
+  // Render loading splash screen during initial session verification
+  if (authLoading) {
+    return (
+      <div className="h-screen w-screen bg-bg-base flex flex-col items-center justify-center relative overflow-hidden">
+        {/* Soft floating background gradient */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-accent/5 blur-3xl animate-pulse" />
+        
+        <div className="relative flex flex-col items-center max-w-sm px-6 text-center space-y-6">
+          {/* Animated Premium Clutch Logo */}
+          <div className="relative w-16 h-16 rounded-2xl bg-white border border-slate-200/80 shadow-md flex items-center justify-center overflow-hidden animate-bounce" style={{ animationDuration: "2s" }}>
+            <svg viewBox="0 0 32 32" className="w-9 h-9 z-10 animate-spin-slow" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path 
+                d="M8 16C8 11.5817 11.5817 8 16 8C20.4183 8 24 11.5817 24 16C24 18.5 22 21 19.5 22.5C18 23.4 17 24.5 16 26" 
+                stroke="url(#loadingClutchLogoGrad)" 
+                strokeWidth="3" 
+                strokeLinecap="round"
+              />
+              <circle cx="16" cy="16" r="3" fill="url(#loadingClutchLogoInnerGrad)" />
+              <defs>
+                <linearGradient id="loadingClutchLogoGrad" x1="8" y1="8" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#4f46e5" />
+                  <stop offset="1" stopColor="#8b5cf6" />
+                </linearGradient>
+                <linearGradient id="loadingClutchLogoInnerGrad" x1="12.5" y1="12.5" x2="19.5" y2="19.5" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#8b5cf6" />
+                  <stop offset="1" stopColor="#ec4899" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/5 to-violet-500/5" />
+          </div>
+
+          <div className="space-y-2 animate-fade-in">
+            <h1 className="text-lg font-bold tracking-tight text-text-primary">Initializing Clutch Guardian</h1>
+            <p className="text-xs text-text-secondary leading-relaxed">Securing authentication token & initializing guardian modules...</p>
+          </div>
+
+          {/* Minimal Elegant Progress Bar */}
+          <div className="w-32 h-1 bg-slate-100 rounded-full overflow-hidden border border-slate-200/40 relative">
+            <div className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full animate-pulse" style={{ width: "100%" }} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Authentication Wall
   if (!user) {
     return (
@@ -816,7 +905,7 @@ export default function App() {
                       <button
                         key={item.id}
                         onClick={() => {
-                          setActiveTab(item.id);
+                          navigate("/" + item.id);
                           setIsMobileSidebarOpen(false);
                         }}
                         className={`w-full text-left px-4 py-3 rounded-xl text-sm font-semibold flex items-center space-x-3 transition-all duration-200 btn-interactive cursor-pointer relative group ${
@@ -966,7 +1055,7 @@ export default function App() {
               return (
                 <button
                   key={item.id}
-                  onClick={() => setActiveTab(item.id)}
+                  onClick={() => navigate("/" + item.id)}
                   className={`w-full text-left px-4 py-3 rounded-xl text-sm font-semibold flex items-center space-x-3 transition-all duration-200 btn-interactive cursor-pointer relative group ${
                     isActive 
                       ? "bg-accent/[0.08] text-accent border border-accent/15 shadow-sm shadow-accent/[0.02]" 
@@ -1081,9 +1170,57 @@ export default function App() {
                 ? "Under the Hood"
                 : "Autonomous Agent Loop"}
             </h2>
+            <p className="text-xs text-text-secondary mt-1">
+              {activeTab === "today"
+                ? "Autonomous threat-level monitoring & focus engine."
+                : activeTab === "tasks"
+                ? "Ingest commits, syllabi, or raw inputs into structured goals."
+                : activeTab === "hood"
+                ? "Deep blueprint analysis of Vertex AI & Cloud Run orchestrations."
+                : "Live execution trace logs of the Clutch background loop."}
+            </p>
           </div>
 
-          <div className="flex items-center space-x-4 self-start sm:self-auto relative">
+          <div className="flex items-center space-x-3 self-start sm:self-auto relative flex-wrap gap-y-2">
+            {/* Contextual top controls */}
+            {activeTab === "today" && (
+              <button
+                onClick={() => {
+                  setFocusMode(!focusMode);
+                  showToast(!focusMode ? "Focus Mode Activated. Simplify and conquer." : "Dashboard restored.");
+                }}
+                className={`flex items-center space-x-2 px-4.5 py-2.5 rounded-xl text-xs font-semibold shadow-sm border transition-all duration-200 active:scale-[0.97] cursor-pointer ${
+                  focusMode 
+                    ? "bg-accent text-white border-accent hover:bg-accent-hover shadow-md shadow-accent/10" 
+                    : "bg-bg-panel text-text-secondary border-border-primary hover:bg-bg-hover"
+                }`}
+              >
+                {focusMode ? <Minimize2 className="w-3.5 h-3.5 animate-pulse" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                <span>{focusMode ? "Exit Focus Mode" : "Focus Mode"}</span>
+              </button>
+            )}
+
+            {activeTab === "tasks" && (
+              <button
+                onClick={handleSyncClassroom}
+                disabled={syncingClassroom}
+                className={`flex items-center space-x-2 px-4.5 py-2.5 rounded-xl text-xs font-semibold shadow-sm border transition-all duration-200 active:scale-[0.97] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                  syncingClassroom
+                    ? "bg-bg-panel border-border-primary text-text-muted"
+                    : "bg-bg-panel text-text-secondary border-border-primary hover:bg-bg-hover"
+                }`}
+              >
+                <RefreshCw className={`w-3.5 h-3.5 text-text-secondary ${syncingClassroom ? "animate-spin text-accent" : ""}`} />
+                <span>{syncingClassroom ? "Syncing Classroom..." : "Sync Classroom"}</span>
+              </button>
+            )}
+
+            {activeTab === "agent" && !(latestAgentRun && latestAgentRun.steps && latestAgentRun.steps.length > 0) && (
+              <span className="text-[10px] bg-bg-panel text-text-muted font-mono font-bold tracking-widest px-3 py-2 rounded-xl border border-border-primary">
+                SIMULATION
+              </span>
+            )}
+
             <button
               onClick={triggerAgentLoop}
               disabled={runningAgent}
@@ -1096,6 +1233,8 @@ export default function App() {
               )}
               <span>{runningAgent ? "Guarding..." : "Run Clutch Sweep"}</span>
             </button>
+
+
 
 
 
@@ -1129,12 +1268,12 @@ export default function App() {
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95, y: -8 }}
                       transition={{ type: "spring", duration: 0.25, bounce: 0.12 }}
-                      className="absolute right-0 mt-2 w-72 bg-white/95 backdrop-blur-md border border-slate-200/60 rounded-2xl shadow-[0_12px_40px_-8px_rgba(15,23,42,0.08),0_1px_4px_rgba(15,23,42,0.02)] p-2 z-40 origin-top-right overflow-hidden focus:outline-none"
+                      className="absolute right-0 mt-2 w-72 bg-bg-panel/95 backdrop-blur-md border border-border-primary rounded-2xl shadow-xl p-2 z-40 origin-top-right overflow-hidden focus:outline-none text-text-primary"
                     >
                       {/* User Info Header */}
-                      <div className="px-3 py-2.5 hover:bg-slate-50/50 rounded-xl transition-colors duration-150 flex items-center space-x-3 mb-1">
+                      <div className="px-3 py-2.5 hover:bg-bg-hover rounded-xl transition-colors duration-150 flex items-center space-x-3 mb-1">
                         {user.photoURL ? (
-                          <img src={user.photoURL} alt="Avatar" className="w-9 h-9 rounded-full border border-slate-200 shadow-sm" />
+                          <img src={user.photoURL} alt="Avatar" className="w-9 h-9 rounded-full border border-border-primary shadow-sm" />
                         ) : (
                           <div className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center border border-accent/15 text-accent font-bold text-xs">
                             {(user.displayName || "C").charAt(0).toUpperCase()}
@@ -1150,7 +1289,7 @@ export default function App() {
                         </div>
                       </div>
 
-                      <div className="border-t border-slate-100/80 my-1" />
+                      <div className="border-t border-border-subtle my-1" />
 
                       {/* Quick Actions Menu Group */}
                       <div className="space-y-0.5">
@@ -1163,11 +1302,11 @@ export default function App() {
                             triggerSeeder();
                             setIsProfileDropdownOpen(false);
                           }}
-                          className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-slate-50 transition-all duration-150 cursor-pointer group active:scale-[0.98] btn-interactive"
+                          className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-bg-hover transition-all duration-150 cursor-pointer group active:scale-[0.98] btn-interactive"
                           title="Reset tasks and load standard demo dataset"
                         >
                           <div className="flex items-center space-x-2.5">
-                            <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-text-muted group-hover:bg-accent/10 group-hover:text-accent transition-colors">
+                            <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-text-muted group-hover:bg-accent/10 group-hover:text-accent transition-colors">
                               <RefreshCw className="w-3.5 h-3.5 transition-transform duration-500 group-hover:rotate-180" />
                             </div>
                             <div>
@@ -1178,7 +1317,7 @@ export default function App() {
                         </button>
                       </div>
 
-                      <div className="border-t border-slate-100/80 my-1" />
+                      <div className="border-t border-border-subtle my-1" />
 
                       {/* Account Group */}
                       <div className="space-y-0.5">
@@ -1187,10 +1326,10 @@ export default function App() {
                             handleSignOut();
                             setIsProfileDropdownOpen(false);
                           }}
-                          className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left text-xs font-semibold text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-150 cursor-pointer group active:scale-[0.98] btn-interactive"
+                          className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left text-xs font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-700 dark:hover:text-red-400 transition-all duration-150 cursor-pointer group active:scale-[0.98] btn-interactive"
                         >
                           <div className="flex items-center space-x-2.5">
-                            <div className="w-7 h-7 rounded-lg bg-red-50 flex items-center justify-center text-red-500 group-hover:bg-red-100 group-hover:text-red-600 transition-colors">
+                            <div className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-950/20 flex items-center justify-center text-red-500 dark:text-red-400 group-hover:bg-red-100 dark:group-hover:bg-red-950/40 group-hover:text-red-600 dark:group-hover:text-red-300 transition-colors">
                               <LogOut className="w-3.5 h-3.5" />
                             </div>
                             <div>
@@ -1226,6 +1365,8 @@ export default function App() {
             getTaskIcon={getTaskIcon}
             getRiskStyles={getRiskStyles}
             highRiskTasks={highRiskTasks}
+            focusMode={focusMode}
+            setFocusMode={setFocusMode}
           />
         )}
 
@@ -1382,7 +1523,7 @@ export default function App() {
         onClose={() => setIsCommandPaletteOpen(false)}
         tasks={tasks}
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={(tab) => navigate("/" + tab)}
         setSelectedTask={setSelectedTask}
         triggerSeeder={() => triggerSeeder()}
         handleSyncClassroom={handleSyncClassroom}

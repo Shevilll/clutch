@@ -647,7 +647,7 @@ export default function TechMapTab() {
       `}</style>
 
       {/* Header Banner */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 rounded-2xl p-4 sm:p-6 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 rounded-2xl p-4 sm:p-6 shadow-md flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
         
@@ -675,7 +675,7 @@ export default function TechMapTab() {
         </div>
         
         {/* Toggle Controls for Layout modes */}
-        <div className="flex items-center gap-3 z-10">
+        <div className="flex flex-wrap items-center gap-3 z-10 w-full xl:w-auto justify-between xl:justify-end shrink-0">
           <div className="bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200/50 dark:border-slate-700/50 flex">
             <button
               onClick={() => setViewMode("blueprint")}

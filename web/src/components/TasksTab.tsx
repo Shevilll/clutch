@@ -198,53 +198,53 @@ export default function TasksTab({
   const getCardRiskStyles = (band: string) => {
     switch (band) {
       case "critical":
-        return "border-rose-100 hover:border-rose-300 hover:shadow-[0_12px_32px_rgba(244,63,94,0.06)] bg-gradient-to-br from-white to-rose-50/10";
+        return "border-rose-100 dark:border-rose-950/40 hover:border-rose-300 dark:hover:border-rose-800 hover:shadow-[0_12px_32px_rgba(244,63,94,0.06)] bg-gradient-to-br from-bg-panel to-rose-50/10 dark:to-rose-950/5";
       case "high":
-        return "border-orange-100 hover:border-orange-300 hover:shadow-[0_12px_32px_rgba(249,115,22,0.06)] bg-gradient-to-br from-white to-orange-50/10";
+        return "border-orange-100 dark:border-orange-950/40 hover:border-orange-300 dark:hover:border-orange-800 hover:shadow-[0_12px_32px_rgba(249,115,22,0.06)] bg-gradient-to-br from-bg-panel to-orange-50/10 dark:to-orange-950/5";
       case "medium":
-        return "border-amber-100 hover:border-amber-300 hover:shadow-[0_12px_32px_rgba(245,158,11,0.06)] bg-gradient-to-br from-white to-amber-50/10";
+        return "border-amber-100 dark:border-amber-950/40 hover:border-amber-300 dark:hover:border-amber-800 hover:shadow-[0_12px_32px_rgba(245,158,11,0.06)] bg-gradient-to-br from-bg-panel to-amber-50/10 dark:to-amber-950/5";
       case "low":
-        return "border-emerald-100 hover:border-emerald-300 hover:shadow-[0_12px_32px_rgba(16,185,129,0.06)] bg-gradient-to-br from-white to-emerald-50/10";
+        return "border-emerald-100 dark:border-emerald-950/40 hover:border-emerald-300 dark:hover:border-emerald-800 hover:shadow-[0_12px_32px_rgba(16,185,129,0.06)] bg-gradient-to-br from-bg-panel to-emerald-50/10 dark:to-emerald-950/5";
       default:
-        return "border-slate-100 hover:border-indigo-200 hover:shadow-[0_12px_32px_rgba(99,102,241,0.06)] bg-gradient-to-br from-white to-slate-50/10";
+        return "border-slate-100 dark:border-slate-800 hover:border-indigo-200 dark:hover:border-indigo-800 hover:shadow-[0_12px_32px_rgba(99,102,241,0.06)] bg-gradient-to-br from-bg-panel to-slate-50/10 dark:to-slate-900/5";
     }
   };
 
   // Bespoke high-contrast badges with specific icons instead of raw un-iconed badges
   const getRiskBadge = (band: string) => {
-    const commonClasses = "text-[9px] px-2.5 py-1 rounded-full font-bold font-mono uppercase tracking-wider flex items-center shrink-0 shadow-sm transition-all duration-150";
+    const commonClasses = "text-[9px] px-2.5 py-1 rounded-full font-bold font-mono uppercase tracking-wider flex items-center shrink-0 shadow-sm transition-all duration-150 border";
     switch (band) {
       case "critical": 
         return (
-          <span className={`${commonClasses} bg-rose-50 text-rose-700`}>
+          <span className={`${commonClasses} bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 border-rose-100 dark:border-rose-900/30`}>
             <AlertOctagon className="w-3 h-3 mr-1 text-rose-500" />
             Critical
           </span>
         );
       case "high": 
         return (
-          <span className={`${commonClasses} bg-orange-50 text-orange-700`}>
+          <span className={`${commonClasses} bg-orange-50 dark:bg-orange-950/50 text-orange-700 dark:text-orange-400 border-orange-100 dark:border-orange-900/30`}>
             <AlertTriangle className="w-3 h-3 mr-1 text-orange-500" />
             High
           </span>
         );
       case "medium": 
         return (
-          <span className={`${commonClasses} bg-amber-50 text-amber-700`}>
+          <span className={`${commonClasses} bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border-amber-100 dark:border-amber-900/30`}>
             <Info className="w-3 h-3 mr-1 text-amber-500" />
             Medium
           </span>
         );
       case "low": 
         return (
-          <span className={`${commonClasses} bg-emerald-50 text-emerald-700`}>
+          <span className={`${commonClasses} bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/30`}>
             <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-500" />
             Low
           </span>
         );
       default: 
         return (
-          <span className={`${commonClasses} bg-slate-50 text-slate-700`}>
+          <span className={`${commonClasses} bg-slate-50 dark:bg-slate-900/50 text-slate-700 dark:text-slate-300 border-slate-100 dark:border-slate-800/30`}>
             <BookOpen className="w-3 h-3 mr-1 text-slate-500" />
             {band}
           </span>
@@ -319,30 +319,8 @@ export default function TasksTab({
   ] as const;
 
   return (
-    <div className="space-y-8 animate-fade-in bg-gradient-to-b from-slate-50/40 via-white/80 to-slate-50/30 min-h-screen p-6 md:p-8 text-slate-800 rounded-3xl border border-slate-100 shadow-[0_4px_30px_rgba(0,0,0,0.01)]">
+    <div className="space-y-8 animate-fade-in text-text-primary">
       
-      {/* HEADER SECTION WITH CLASSRoom SYNC */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 font-mono flex items-center space-x-1.5">
-            <Bookmark className="w-3.5 h-3.5" />
-            <span>Commitment Dashboard</span>
-          </span>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight mt-1">
-            Task Ingest & Structure
-          </h2>
-        </div>
-
-        <button
-          onClick={handleSyncClassroom}
-          disabled={syncingClassroom}
-          className="flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-bg-panel text-slate-700 hover:text-slate-900 border border-border-primary transition-all duration-200 active:scale-[0.97] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-4 focus:ring-indigo-50/30"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${syncingClassroom ? "animate-spin text-indigo-600" : ""}`} />
-          <span>{syncingClassroom ? "Syncing Classroom..." : "Sync Google Classroom"}</span>
-        </button>
-      </div>
-
       {/* MULTIMODAL CHAOS CAPTURE BOX */}
       <div className="bg-bg-panel border border-border-subtle rounded-3xl p-6 md:p-8 shadow-md space-y-6">
         <div className="flex items-center justify-between">

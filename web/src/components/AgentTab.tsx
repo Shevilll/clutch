@@ -466,64 +466,8 @@ export default function AgentTab({ latestAgentRun, runningAgent, triggerAgentLoo
   const selectedStep = rawSteps[selectedStepIdx];
 
   return (
-    <div 
-      className="bg-bg-base min-h-screen text-text-primary font-sans p-6 rounded-3xl border border-border-primary shadow-inner space-y-8 max-w-7xl mx-auto antialiased relative"
-      style={{
-        backgroundImage: "radial-gradient(var(--border-primary) 1px, transparent 1px)",
-        backgroundSize: "24px 24px"
-      }}
-    >
-      {/* Premium Header Panel */}
-      <div className="bg-bg-panel/80 backdrop-blur-md border border-border-primary rounded-3xl p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="flex items-center space-x-4">
-          <div className="w-12 h-12 rounded-2xl bg-slate-900 dark:bg-slate-800 flex items-center justify-center border border-slate-950 dark:border-slate-700 shadow-xs">
-            <Terminal className="w-5 h-5 text-slate-100" />
-          </div>
-          <div>
-            <div className="flex items-center space-x-2.5">
-              <h1 className="text-lg font-extrabold text-text-primary tracking-tight">CLUTCH GUARDIAN LOOP ENGINE</h1>
-              <span className="flex h-1.5 w-1.5 relative">
-                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${runningAgent ? "bg-amber-400" : "bg-slate-400"}`}></span>
-                <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${runningAgent ? "bg-amber-500" : "bg-slate-50"}`}></span>
-              </span>
-            </div>
-            <p className="text-xs text-text-secondary mt-0.5 font-medium leading-normal max-w-xl font-mono">
-              Observe high-fidelity traces of automated perception and response loops. Click timeline nodes to hook telemetry streams.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-3 shrink-0">
-          {!hasLiveSteps && (
-            <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono font-bold tracking-widest px-2.5 py-1 rounded-md border border-border-primary">
-              SIMULATION MODULE
-            </span>
-          )}
-          <button
-            id="agent-run-trigger-button"
-            onClick={triggerAgentLoop}
-            disabled={runningAgent}
-            className={`px-5 py-2.5 rounded-2xl text-xs font-semibold tracking-tight transition-all duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] flex items-center space-x-2 active:scale-[0.97] cursor-pointer ${
-              runningAgent
-                ? "bg-slate-100 dark:bg-slate-800 border border-border-primary text-slate-400 cursor-not-allowed"
-                : "bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-slate-100 border border-slate-950 dark:border-slate-700 shadow-sm"
-            }`}
-          >
-            {runningAgent ? (
-              <>
-                <RefreshCw className="w-3.5 h-3.5 animate-spin text-stone-400" />
-                <span className="font-mono">Sweeping Commitments...</span>
-              </>
-            ) : (
-              <>
-                <Activity className="w-3.5 h-3.5" />
-                <span className="font-mono">Run Guardian Sweep</span>
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-
+    <div className="space-y-8 animate-fade-in text-text-primary">
+      
       {/* Three-Pane Workspace */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
@@ -890,7 +834,7 @@ export default function AgentTab({ latestAgentRun, runningAgent, triggerAgentLoo
 
                     {/* Tab Panels */}
                     {consoleTab === "stdout" && (
-                      <div className="bg-slate-50 border border-border-primary rounded-xl p-4 font-mono text-[11px] leading-relaxed text-text-secondary flex-1 flex flex-col justify-start min-h-0 overflow-hidden shadow-inner">
+                      <div className="bg-slate-50 border border-border-primary rounded-xl p-4 font-mono text-[11px] leading-relaxed text-text-secondary flex-1 flex flex-col justify-start min-h-0 overflow-hidden shadow-inner w-full min-w-0">
                         <div className="flex items-center justify-between pb-2 border-b border-border-subtle mb-2.5 shrink-0">
                           <span className="text-[9px] font-mono text-text-muted uppercase tracking-widest font-semibold">
                             telemetry_system_log.stdout
@@ -905,7 +849,7 @@ export default function AgentTab({ latestAgentRun, runningAgent, triggerAgentLoo
                             Copy
                           </button>
                         </div>
-                        <div className="overflow-y-auto max-h-[300px] flex-1 space-y-1 pr-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                        <div className="overflow-y-auto flex-1 space-y-1 pr-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent w-full min-w-0">
                           {(selectedStep.logs || [
                             "16:08:00.000 [SYSTEM] No stdout traces registered for this node"
                           ]).map((logLine, lIdx) => {
@@ -913,28 +857,28 @@ export default function AgentTab({ latestAgentRun, runningAgent, triggerAgentLoo
                             const logRegex = /^([\d:\.]+)\s+\[([^\]]+)\]\s+(.*)$/;
                             const match = logLine.match(logRegex);
                             if (match) {
-                              const ts = match[1];
-                              const severity = match[2];
-                              const msg = match[3];
-                              let severityClass = "text-text-muted";
-                              if (severity === "SYSTEM") severityClass = "text-text-secondary font-semibold";
-                              else if (severity === "DB_CONN") severityClass = "text-blue-500 dark:text-blue-400 font-semibold";
-                              else if (severity === "API_REQ" || severity === "API_RES" || severity === "NETWORK") severityClass = "text-amber-600 dark:text-amber-400 font-semibold";
-                              else if (severity === "ALERT") severityClass = "text-rose-500 dark:text-rose-400 font-bold";
-                              else if (severity === "EVAL" || severity === "ENGINE" || severity === "CRITIC") severityClass = "text-purple-500 dark:text-purple-400 font-semibold";
-                              else if (severity === "PROCESS" || severity === "STATE" || severity === "SYNC") severityClass = "text-emerald-600 dark:text-emerald-400 font-semibold";
-                              else if (severity === "TOOL" || severity === "PLANNER") severityClass = "text-indigo-500 dark:text-indigo-400 font-semibold";
+                               const ts = match[1];
+                               const severity = match[2];
+                               const msg = match[3];
+                               let severityClass = "text-text-muted";
+                               if (severity === "SYSTEM") severityClass = "text-text-secondary font-semibold";
+                               else if (severity === "DB_CONN") severityClass = "text-blue-500 dark:text-blue-400 font-semibold";
+                               else if (severity === "API_REQ" || severity === "API_RES" || severity === "NETWORK") severityClass = "text-amber-600 dark:text-amber-400 font-semibold";
+                               else if (severity === "ALERT") severityClass = "text-rose-500 dark:text-rose-400 font-bold";
+                               else if (severity === "EVAL" || severity === "ENGINE" || severity === "CRITIC") severityClass = "text-purple-500 dark:text-purple-400 font-semibold";
+                               else if (severity === "PROCESS" || severity === "STATE" || severity === "SYNC") severityClass = "text-emerald-600 dark:text-emerald-400 font-semibold";
+                               else if (severity === "TOOL" || severity === "PLANNER") severityClass = "text-indigo-500 dark:text-indigo-400 font-semibold";
 
-                              return (
-                                <div key={lIdx} className="hover:bg-slate-500/5 py-0.5 px-1 rounded transition-colors duration-100 flex items-start space-x-2">
-                                  <span className="text-text-muted shrink-0">{ts}</span>
-                                  <span className={`shrink-0 min-w-[55px] text-right ${severityClass}`}>[{severity}]</span>
-                                  <span className="text-text-secondary select-text selection:bg-amber-500/20 selection:text-text-primary">{msg}</span>
-                                </div>
-                              );
+                               return (
+                                 <div key={lIdx} className="hover:bg-slate-500/5 py-0.5 px-1 rounded transition-colors duration-100 flex items-start space-x-2 w-full min-w-0">
+                                   <span className="text-text-muted shrink-0">{ts}</span>
+                                   <span className={`shrink-0 min-w-[55px] text-right ${severityClass}`}>[{severity}]</span>
+                                   <span className="text-text-secondary select-text selection:bg-amber-500/20 selection:text-text-primary flex-1 min-w-0 break-words">{msg}</span>
+                                 </div>
+                               );
                             }
                             return (
-                              <div key={lIdx} className="text-text-secondary hover:bg-slate-500/5 py-0.5 px-1 rounded transition-colors duration-100 select-text selection:bg-amber-500/20">
+                              <div key={lIdx} className="text-text-secondary hover:bg-slate-500/5 py-0.5 px-1 rounded transition-colors duration-100 select-text selection:bg-amber-500/20 w-full min-w-0 break-words">
                                 {logLine}
                               </div>
                             );
@@ -944,7 +888,7 @@ export default function AgentTab({ latestAgentRun, runningAgent, triggerAgentLoo
                     )}
 
                     {consoleTab === "payload" && selectedStep.payload && (
-                      <div className="bg-slate-50 border border-border-primary rounded-xl p-4 overflow-hidden shadow-inner flex-1 flex flex-col justify-start min-h-0">
+                      <div className="bg-slate-50 border border-border-primary rounded-xl p-4 overflow-hidden shadow-inner flex-1 flex flex-col justify-start min-h-0 w-full min-w-0">
                         <div className="flex items-center justify-between pb-2 border-b border-border-subtle mb-2.5 shrink-0">
                           <span className="text-[9px] font-mono text-text-muted uppercase tracking-widest font-semibold">
                             telemetry_stream.json
@@ -958,7 +902,7 @@ export default function AgentTab({ latestAgentRun, runningAgent, triggerAgentLoo
                             Copy
                           </button>
                         </div>
-                        <div className="overflow-y-auto max-h-[300px] flex-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                        <div className="overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent w-full min-w-0">
                           {renderHighlightedJson(selectedStep.payload)}
                         </div>
                       </div>

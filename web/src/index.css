@@ -154,33 +154,37 @@
   --slate-950: oklch(0.10 0.01 240);
 }
 
-/* Dark Mode Overrides */
-html.dark {
-  --bg-base: oklch(0.10 0.012 272);
-  --bg-panel: oklch(0.14 0.012 272);
-  --bg-dialog: oklch(0.16 0.012 272);
-  --bg-popover: oklch(0.16 0.012 272);
-  --text-primary: oklch(0.95 0.005 272);
-  --text-secondary: oklch(0.80 0.01 272);
-  --text-muted: oklch(0.60 0.01 272);
-  --border-primary: oklch(0.20 0.012 272);
-  --border-subtle: oklch(0.16 0.012 272);
-  --bg-hover: oklch(0.18 0.012 272);
-  --blue-primary: oklch(0.48 0.18 250);
+/* Custom premium dark mode system */
+.dark {
+  --bg-base: oklch(0.08 0.005 240);         /* Deep obsidian base */
+  --bg-panel: oklch(0.12 0.01 240);         /* Premium dark grey panel */
+  --bg-dialog: oklch(0.14 0.01 240);        /* Dialog background */
+  --bg-popover: oklch(0.14 0.01 240);       /* Popover background */
+  --text-primary: oklch(0.96 0.005 240);    /* Soft near-white */
+  --text-secondary: oklch(0.74 0.01 240);   /* Muted grey */
+  --text-muted: oklch(0.50 0.01 240);       /* Dim grey */
+  --border-primary: oklch(0.18 0.01 240 / 0.8); /* Refined thin border */
+  --border-subtle: oklch(0.14 0.01 240);    /* Subtle border */
+  --bg-hover: oklch(0.16 0.01 240);         /* Active hover */
+  --blue-primary: oklch(0.68 0.16 250);     /* Premium neon blue */
 
-  /* Inverted gray scale */
-  --slate-50: oklch(0.14 0.012 272);
-  --slate-100: oklch(0.17 0.012 272);
-  --slate-200: oklch(0.22 0.012 272);
-  --slate-300: oklch(0.28 0.012 272);
-  --slate-400: oklch(0.55 0.01 272);
-  --slate-500: oklch(0.65 0.01 272);
-  --slate-600: oklch(0.75 0.01 272);
-  --slate-700: oklch(0.82 0.01 272);
-  --slate-800: oklch(0.88 0.01 272);
-  --slate-900: oklch(0.94 0.005 272);
-  --slate-950: oklch(0.98 0.005 272);
+  /* Inverted custom slate scale for perfect dark mode automatic contrast */
+  --slate-50: oklch(0.10 0.01 240);
+  --slate-100: oklch(0.14 0.01 240);
+  --slate-200: oklch(0.18 0.01 240);
+  --slate-300: oklch(0.24 0.01 240);
+  --slate-400: oklch(0.50 0.01 240);
+  --slate-500: oklch(0.60 0.01 240);
+  --slate-600: oklch(0.70 0.01 240);
+  --slate-700: oklch(0.80 0.01 240);
+  --slate-800: oklch(0.88 0.01 240);
+  --slate-900: oklch(0.94 0.01 240);
+  --slate-950: oklch(0.985 0.005 240);
+
+  --scrollbar-thumb: oklch(0.24 0.01 240);
 }
+
+
 
 body {
   margin: 0;
