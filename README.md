@@ -1,7 +1,7 @@
 # Clutch — The Autonomous Deadline-Guardian Agent
 
 > **Problem Statement #1:** The Last-Minute Life Saver
-> **Live Deployed App:** [clutch-app-588265011925.us-central1.run.app](https://clutch-app-588265011925.us-central1.run.app)
+> **Live Deployed App:** [clutch.theahmadfaraz.com](https://clutch.theahmadfaraz.com)
 > **GitHub Repository:** [https://github.com/Shevilll/clutch](https://github.com/Shevilll/clutch)
 > **Pitch & Demo Video:** [https://youtu.be/your-demo-video](https://youtu.be/your-demo-video) (Link provided in submission)
 
